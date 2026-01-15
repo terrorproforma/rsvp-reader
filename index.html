@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="RSVP Speed Reader - Read faster with Rapid Serial Visual Presentation. Paste any text and boost your reading speed.">
+  <title>RSVP Speed Reader</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+  <!-- ================================
+       INPUT VIEW
+       ================================ -->
+  <div id="input-view" class="view active">
+    <div class="container">
+      <!-- Navigation -->
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-view="input">Reader</button>
+        <button class="nav-tab" data-view="notes">Saved Notes</button>
+      </nav>
+
+      <!-- Header -->
+      <header class="input-header slide-up">
+        <h1>R<span>S</span>VP Reader</h1>
+        <p>Paste your text and read at lightning speed</p>
+      </header>
+
+      <!-- Text Input -->
+      <section class="text-input-section slide-up">
+        <div class="input-label-row">
+          <label for="text-input">Paste or type your text</label>
+          <label class="file-upload-btn">
+            📁 Upload .txt
+            <input type="file" id="file-input" accept=".txt,text/plain" hidden>
+          </label>
+        </div>
+        <textarea id="text-input" class="textarea"
+          placeholder="Paste any article, book chapter, or text you want to speed read... or drag & drop a .txt file here"
+          spellcheck="false"></textarea>
+        <div class="word-count">
+          <span id="word-count">0</span> words · <span id="reading-time">0</span> min at current speed
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section class="settings-section slide-up">
+        <div class="setting-group">
+          <label>Reading Speed</label>
+          <div class="slider-container">
+            <input type="range" id="wpm-slider" class="slider" min="100" max="1000" value="300" step="25">
+            <span id="wpm-display" class="wpm-value">300 wpm</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons slide-up">
+        <button id="start-btn" class="btn btn-primary btn-lg">
+          ▶ Start Reading
+        </button>
+        <button id="save-btn" class="btn btn-secondary btn-lg">
+          💾 Save as Note
+        </button>
+      </div>
+
+      <!-- Keyboard Hints -->
+      <div class="keyboard-hints"
+        style="text-align: center; margin-top: var(--space-xl); color: var(--text-muted); font-size: 0.875rem;">
+        <span class="kbd">Space</span> Play/Pause ·
+        <span class="kbd">←</span><span class="kbd">→</span> Speed ·
+        <span class="kbd">Esc</span> Exit
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================
+       NOTES VIEW
+       ================================ -->
+  <div id="notes-view" class="view">
+    <div class="container">
+      <!-- Navigation -->
+      <nav class="nav-tabs">
+        <button class="nav-tab" data-view="input">Reader</button>
+        <button class="nav-tab active" data-view="notes">Saved Notes</button>
+      </nav>
+
+      <header class="notes-header">
+        <h2>📚 Saved Notes</h2>
+      </header>
+
+      <div id="notes-list" class="notes-list">
+        <!-- Notes will be inserted here -->
+      </div>
+
+      <div id="empty-state" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">📝</div>
+        <p>No saved notes yet</p>
+        <p style="font-size: 0.875rem; margin-top: var(--space-sm);">
+          Go to Reader and save some text to get started
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================
+       READER VIEW
+       ================================ -->
+  <div id="reader-view" class="view reader-view">
+    <!-- Focus Lines -->
+    <div class="reader-focus-lines"></div>
+
+    <!-- Exit Button -->
+    <button id="exit-btn" class="btn btn-ghost reader-exit">
+      ✕ Exit
+    </button>
+
+    <!-- Word Display -->
+    <div class="reader-word-display">
+      <div id="word-container" class="word-container">
+        <span id="word-before" class="word-before"></span><span id="word-orp" class="word-orp"></span><span
+          id="word-after" class="word-after"></span>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="reader-controls">
+      <div class="reader-progress">
+        <div class="reader-progress-info">
+          <span id="progress-text">0 / 0 words</span>
+          <span id="time-remaining">0:00 remaining</span>
+        </div>
+        <div id="progress-bar" class="progress-bar seekable">
+          <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="reader-buttons">
+        <button id="prev-btn" class="btn btn-ghost btn-icon" title="Previous word">
+          ⏮
+        </button>
+        <button id="play-pause-btn" class="btn btn-primary btn-icon play-btn" title="Play/Pause">
+          ▶
+        </button>
+        <button id="next-btn" class="btn btn-ghost btn-icon" title="Next word">
+          ⏭
+        </button>
+      </div>
+
+      <!-- WPM Slider Control -->
+      <div class="reader-wpm-control">
+        <input type="range" id="reader-wpm-slider" class="slider" min="100" max="1000" step="25" value="300">
+        <span id="reader-wpm" class="reader-wpm-value">300 wpm</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================
+       SAVE MODAL
+       ================================ -->
+  <div id="save-modal" class="modal-overlay">
+    <div class="modal">
+      <h2>💾 Save Note</h2>
+      <div class="text-input-section">
+        <label for="note-title">Note Title</label>
+        <input type="text" id="note-title" class="input" placeholder="Enter a title for this note...">
+      </div>
+      <div class="modal-actions">
+        <button id="cancel-save-btn" class="btn btn-ghost">Cancel</button>
+        <button id="confirm-save-btn" class="btn btn-primary">Save Note</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+
+</html>
