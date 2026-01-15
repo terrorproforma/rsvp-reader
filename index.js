@@ -399,6 +399,37 @@ function handleProgressMouseUp() {
   document.removeEventListener('mouseup', handleProgressMouseUp);
 }
 
+// Touch event handlers for mobile
+function handleProgressTouchStart(e) {
+  e.preventDefault();
+  state.isSeeking = true;
+  seekToPositionFromTouch(e);
+}
+
+function handleProgressTouchMove(e) {
+  if (state.isSeeking) {
+    e.preventDefault();
+    seekToPositionFromTouch(e);
+  }
+}
+
+function handleProgressTouchEnd() {
+  state.isSeeking = false;
+}
+
+function seekToPositionFromTouch(e) {
+  const touch = e.touches[0];
+  const bar = elements.progressBar;
+  const rect = bar.getBoundingClientRect();
+  const x = touch.clientX - rect.left;
+  const percent = Math.max(0, Math.min(1, x / rect.width));
+  const newIndex = Math.floor(percent * state.words.length);
+
+  state.currentIndex = Math.min(newIndex, state.words.length - 1);
+  displayCurrentWord();
+  updateProgress();
+}
+
 function enterReader() {
   if (state.words.length === 0) {
     alert('Please enter some text first!');
@@ -684,8 +715,11 @@ function initEventListeners() {
   // Reader WPM slider (syncs with main slider)
   elements.readerWpmSlider.addEventListener('input', handleReaderWpmChange);
 
-  // Progress bar seeking
+  // Progress bar seeking (mouse and touch)
   elements.progressBar.addEventListener('mousedown', handleProgressMouseDown);
+  elements.progressBar.addEventListener('touchstart', handleProgressTouchStart, { passive: false });
+  elements.progressBar.addEventListener('touchmove', handleProgressTouchMove, { passive: false });
+  elements.progressBar.addEventListener('touchend', handleProgressTouchEnd);
 
   // Nav tabs
   elements.navTabs.forEach(tab => {

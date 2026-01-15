@@ -803,29 +803,229 @@ a:hover {
 
 /* Responsive */
 @media (max-width: 600px) {
+
+  /* Container */
   .container {
     padding: var(--space-md);
   }
 
-  .input-header h1 {
-    font-size: 1.75rem;
+  /* Input View */
+  .input-view {
+    padding: var(--space-lg) var(--space-md);
   }
 
+  .input-header {
+    margin-bottom: var(--space-lg);
+  }
+
+  .input-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .input-header p {
+    font-size: 0.875rem;
+  }
+
+  /* File upload button - larger touch target */
+  .file-upload-btn {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.875rem;
+    min-height: 44px;
+  }
+
+  .input-label-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  /* Settings */
   .settings-section {
     flex-direction: column;
+    padding: var(--space-md);
   }
 
+  .setting-group {
+    min-width: 100%;
+  }
+
+  /* Action buttons - full width, larger */
   .action-buttons {
     flex-direction: column;
   }
 
   .action-buttons .btn {
     width: 100%;
+    min-height: 50px;
+    font-size: 1rem;
   }
 
-  .reader-wpm {
-    bottom: auto;
-    top: var(--space-lg);
-    right: var(--space-lg);
+  /* Keyboard hints - hide on mobile (touch devices) */
+  .shortcuts {
+    display: none;
+  }
+
+  /* ================================
+     READER VIEW - MOBILE
+     ================================ */
+  .reader-view {
+    padding-bottom: 180px;
+    /* More space for controls */
+  }
+
+  .reader-exit {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.875rem;
+    min-height: 44px;
+  }
+
+  /* Word display - smaller font on mobile */
+  .word-container {
+    font-size: clamp(2rem, 12vw, 4rem);
+  }
+
+  /* Reader controls - stack vertically */
+  .reader-controls {
+    padding: var(--space-md);
+    padding-bottom: env(safe-area-inset-bottom, var(--space-md));
+  }
+
+  .reader-progress {
+    margin-bottom: var(--space-md);
+  }
+
+  .reader-progress-info {
+    font-size: 0.7rem;
+  }
+
+  /* Progress bar - taller for easier touch */
+  .progress-bar.seekable {
+    height: 12px;
+  }
+
+  .progress-bar.seekable:hover,
+  .progress-bar.seekable:active {
+    height: 16px;
+  }
+
+  /* Reader buttons - larger touch targets */
+  .reader-buttons {
+    gap: var(--space-xl);
+    margin-bottom: var(--space-md);
+  }
+
+  .reader-buttons .btn-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+
+  .play-btn {
+    width: 70px;
+    height: 70px;
+    font-size: 1.75rem;
+  }
+
+  /* WPM control - better mobile layout */
+  .reader-wpm-control {
+    flex-direction: row;
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
+  }
+
+  .reader-wpm-control .slider {
+    flex: 1;
+    min-width: 120px;
+    height: 8px;
+  }
+
+  .reader-wpm-value {
+    font-size: 0.9rem;
+    min-width: 70px;
+    text-align: right;
+  }
+
+  /* ================================
+     NOTES VIEW - MOBILE
+     ================================ */
+  .notes-view {
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  /* Note cards - ensure delete button visible */
+  .note-card {
+    padding: var(--space-md);
+    position: relative;
+  }
+
+  .note-content {
+    padding-right: 50px;
+    /* Space for delete button */
+  }
+
+  .note-title {
+    font-size: 1rem;
+  }
+
+  .note-preview {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .note-meta {
+    font-size: 0.7rem;
+  }
+
+  /* Delete button - larger touch target, always visible */
+  .note-delete {
+    width: 44px;
+    height: 44px;
+    opacity: 1;
+    /* Always visible on mobile */
+    position: absolute;
+    right: var(--space-sm);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* ================================
+     MODAL - MOBILE
+     ================================ */
+  .modal-content {
+    margin: var(--space-md);
+    width: calc(100% - var(--space-xl));
+    max-width: none;
+  }
+
+  .modal-buttons {
+    flex-direction: column-reverse;
+  }
+
+  .modal-buttons .btn {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  /* Nav tabs - larger touch */
+  .nav-tab {
+    padding: var(--space-md) var(--space-lg);
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 375px) {
+  .input-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .word-container {
+    font-size: clamp(1.5rem, 10vw, 3rem);
+  }
+
+  .play-btn {
+    width: 60px;
+    height: 60px;
   }
 }
