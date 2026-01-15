@@ -20,7 +20,8 @@ const state = {
   isPlaying: false,
   isSeeking: false,
   intervalId: null,
-  notes: []
+  notes: [],
+  orpAlignment: 'left' // 'left', 'center', 'right'
 };
 
 // ================================
@@ -40,6 +41,7 @@ const elements = {
   readingTime: document.getElementById('reading-time'),
   wpmSlider: document.getElementById('wpm-slider'),
   wpmDisplay: document.getElementById('wpm-display'),
+  alignmentBtns: document.querySelectorAll('.alignment-btn'),
 
   // Buttons
   startBtn: document.getElementById('start-btn'),
@@ -302,20 +304,34 @@ function displayCurrentWord() {
     elements.wordOrp.textContent = orp;
     elements.wordAfter.textContent = after;
 
-    // Calculate offset to put LEFT EDGE of ORP letter on the vertical line
-    // We shift so that beforeWidth pixels are to the left of center
+    // Calculate offset based on alignment mode
+    // - left: left edge of ORP at center
+    // - center: center of ORP at center
+    // - right: right edge of ORP at center
     requestAnimationFrame(() => {
       const beforeWidth = elements.wordBefore.offsetWidth;
       const orpWidth = elements.wordOrp.offsetWidth;
       const afterWidth = elements.wordAfter.offsetWidth;
       const totalWidth = beforeWidth + orpWidth + afterWidth;
-
-      // We want the left edge of ORP at center
-      // Currently the word is centered, so we need to shift
-      // so that beforeWidth is exactly to the left of center
-      const orpLeftEdge = beforeWidth;
       const containerCenter = totalWidth / 2;
-      const offset = orpLeftEdge - containerCenter;
+
+      let offset;
+      switch (state.orpAlignment) {
+        case 'left':
+          // Left edge of ORP at center line
+          offset = beforeWidth - containerCenter;
+          break;
+        case 'center':
+          // Center of ORP at center line
+          offset = (beforeWidth + orpWidth / 2) - containerCenter;
+          break;
+        case 'right':
+          // Right edge of ORP at center line
+          offset = (beforeWidth + orpWidth) - containerCenter;
+          break;
+        default:
+          offset = beforeWidth - containerCenter;
+      }
 
       elements.wordContainer.style.transform = `translateX(${-offset}px)`;
     });
@@ -445,6 +461,9 @@ function enterReader() {
   displayCurrentWord();
   updateProgress();
   showView('reader');
+
+  // Auto-play when entering reader
+  startReading();
 }
 
 function exitReader() {
@@ -711,6 +730,23 @@ function initEventListeners() {
 
   // WPM slider (input view)
   elements.wpmSlider.addEventListener('input', handleWpmChange);
+
+  // Alignment buttons
+  elements.alignmentBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Update state
+      state.orpAlignment = btn.dataset.align;
+
+      // Update active class
+      elements.alignmentBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // If in reader, update display
+      if (state.words.length > 0) {
+        displayCurrentWord();
+      }
+    });
+  });
 
   // Reader WPM slider (syncs with main slider)
   elements.readerWpmSlider.addEventListener('input', handleReaderWpmChange);
