@@ -256,18 +256,46 @@ function startReading() {
   state.isPlaying = true;
   elements.playPauseBtn.innerHTML = '⏸';
 
-  const interval = (60 / state.wpm) * 1000; // milliseconds per word
+  scheduleNextWord();
+}
 
-  state.intervalId = setInterval(() => {
-    if (state.currentIndex >= state.words.length) {
-      stopReading();
-      return;
-    }
+function scheduleNextWord() {
+  if (!state.isPlaying) return;
 
-    displayCurrentWord();
-    state.currentIndex++;
-    updateProgress();
-  }, interval);
+  if (state.currentIndex >= state.words.length) {
+    stopReading();
+    return;
+  }
+
+  displayCurrentWord();
+  const word = state.words[state.currentIndex];
+  state.currentIndex++;
+  updateProgress();
+
+  // Calculate delay with punctuation pauses
+  const baseInterval = (60 / state.wpm) * 1000;
+  const delay = baseInterval * getPunctuationMultiplier(word);
+
+  state.intervalId = setTimeout(scheduleNextWord, delay);
+}
+
+function getPunctuationMultiplier(word) {
+  if (!word) return 1;
+  const lastChar = word.slice(-1);
+
+  // Longer pause for sentence endings
+  if ('.!?'.includes(lastChar)) return 2.0;
+
+  // Medium pause for major breaks
+  if (':;'.includes(lastChar)) return 1.5;
+
+  // Slight pause for minor breaks
+  if (','.includes(lastChar)) return 1.25;
+
+  // Pause for dashes and ellipsis
+  if (word.endsWith('—') || word.endsWith('...') || word.endsWith('–')) return 1.5;
+
+  return 1;
 }
 
 function stopReading() {
@@ -275,7 +303,7 @@ function stopReading() {
   elements.playPauseBtn.innerHTML = '▶';
 
   if (state.intervalId) {
-    clearInterval(state.intervalId);
+    clearTimeout(state.intervalId);
     state.intervalId = null;
   }
 }
