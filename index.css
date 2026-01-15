@@ -460,6 +460,67 @@ a:hover {
   text-align: right;
 }
 
+/* Pause Settings */
+.pause-settings {
+  margin-bottom: var(--space-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.pause-settings summary {
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  user-select: none;
+  transition: background var(--transition-fast);
+}
+
+.pause-settings summary:hover {
+  background: var(--bg-tertiary);
+}
+
+.pause-settings[open] summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.pause-settings-content {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.pause-setting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.pause-setting label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.pause-slider-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.pause-slider {
+  flex: 1;
+}
+
+.pause-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 45px;
+  text-align: right;
+}
+
 .action-buttons {
   display: flex;
   gap: var(--space-md);

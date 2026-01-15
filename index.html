@@ -74,6 +74,34 @@
         </div>
       </section>
 
+      <!-- Pause Settings (Collapsible) -->
+      <details class="pause-settings slide-up">
+        <summary>⚙️ Punctuation Pauses</summary>
+        <div class="pause-settings-content">
+          <div class="pause-setting">
+            <label>Period / ! / ? pause</label>
+            <div class="pause-slider-row">
+              <input type="range" id="pause-period" class="slider pause-slider" min="1" max="4" value="2" step="0.25">
+              <span id="pause-period-value" class="pause-value">2.0×</span>
+            </div>
+          </div>
+          <div class="pause-setting">
+            <label>Comma pause</label>
+            <div class="pause-slider-row">
+              <input type="range" id="pause-comma" class="slider pause-slider" min="1" max="3" value="1.25" step="0.25">
+              <span id="pause-comma-value" class="pause-value">1.25×</span>
+            </div>
+          </div>
+          <div class="pause-setting">
+            <label>Colon / semicolon pause</label>
+            <div class="pause-slider-row">
+              <input type="range" id="pause-colon" class="slider pause-slider" min="1" max="3" value="1.5" step="0.25">
+              <span id="pause-colon-value" class="pause-value">1.5×</span>
+            </div>
+          </div>
+        </div>
+      </details>
+
       <!-- Action Buttons -->
       <div class="action-buttons slide-up">
         <button id="start-btn" class="btn btn-primary btn-lg">

@@ -21,7 +21,12 @@ const state = {
   isSeeking: false,
   intervalId: null,
   notes: [],
-  orpAlignment: 'left' // 'left', 'center', 'right'
+  orpAlignment: 'left', // 'left', 'center', 'right'
+  pauseMultipliers: {
+    period: 2.0,   // . ! ?
+    comma: 1.25,   // ,
+    colon: 1.5     // : ;
+  }
 };
 
 // ================================
@@ -43,6 +48,14 @@ const elements = {
   wpmDisplay: document.getElementById('wpm-display'),
   alignmentBtns: document.querySelectorAll('.alignment-btn'),
   readerAlignBtns: document.querySelectorAll('.reader-align-btn'),
+
+  // Pause settings
+  pausePeriodSlider: document.getElementById('pause-period'),
+  pausePeriodValue: document.getElementById('pause-period-value'),
+  pauseCommaSlider: document.getElementById('pause-comma'),
+  pauseCommaValue: document.getElementById('pause-comma-value'),
+  pauseColonSlider: document.getElementById('pause-colon'),
+  pauseColonValue: document.getElementById('pause-colon-value'),
 
   // Buttons
   startBtn: document.getElementById('start-btn'),
@@ -283,17 +296,17 @@ function getPunctuationMultiplier(word) {
   if (!word) return 1;
   const lastChar = word.slice(-1);
 
-  // Longer pause for sentence endings
-  if ('.!?'.includes(lastChar)) return 2.0;
+  // Longer pause for sentence endings (. ! ?)
+  if ('.!?'.includes(lastChar)) return state.pauseMultipliers.period;
 
-  // Medium pause for major breaks
-  if (':;'.includes(lastChar)) return 1.5;
+  // Medium pause for major breaks (: ;)
+  if (':;'.includes(lastChar)) return state.pauseMultipliers.colon;
 
-  // Slight pause for minor breaks
-  if (','.includes(lastChar)) return 1.25;
+  // Slight pause for minor breaks (,)
+  if (','.includes(lastChar)) return state.pauseMultipliers.comma;
 
   // Pause for dashes and ellipsis
-  if (word.endsWith('—') || word.endsWith('...') || word.endsWith('–')) return 1.5;
+  if (word.endsWith('—') || word.endsWith('...') || word.endsWith('–')) return state.pauseMultipliers.colon;
 
   return 1;
 }
@@ -768,6 +781,22 @@ function initEventListeners() {
 
   // WPM slider (input view)
   elements.wpmSlider.addEventListener('input', handleWpmChange);
+
+  // Pause settings sliders
+  elements.pausePeriodSlider.addEventListener('input', () => {
+    state.pauseMultipliers.period = parseFloat(elements.pausePeriodSlider.value);
+    elements.pausePeriodValue.textContent = `${state.pauseMultipliers.period.toFixed(2)}×`;
+  });
+
+  elements.pauseCommaSlider.addEventListener('input', () => {
+    state.pauseMultipliers.comma = parseFloat(elements.pauseCommaSlider.value);
+    elements.pauseCommaValue.textContent = `${state.pauseMultipliers.comma.toFixed(2)}×`;
+  });
+
+  elements.pauseColonSlider.addEventListener('input', () => {
+    state.pauseMultipliers.colon = parseFloat(elements.pauseColonSlider.value);
+    elements.pauseColonValue.textContent = `${state.pauseMultipliers.colon.toFixed(2)}×`;
+  });
 
   // Alignment buttons (input view)
   elements.alignmentBtns.forEach(btn => {
