@@ -42,6 +42,7 @@ const elements = {
   wpmSlider: document.getElementById('wpm-slider'),
   wpmDisplay: document.getElementById('wpm-display'),
   alignmentBtns: document.querySelectorAll('.alignment-btn'),
+  readerAlignBtns: document.querySelectorAll('.reader-align-btn'),
 
   // Buttons
   startBtn: document.getElementById('start-btn'),
@@ -458,6 +459,11 @@ function enterReader() {
   elements.readerWpmSlider.value = state.wpm;
   elements.readerWpm.textContent = `${state.wpm} wpm`;
 
+  // Sync reader alignment buttons with current alignment
+  elements.readerAlignBtns.forEach(b => {
+    b.classList.toggle('active', b.dataset.align === state.orpAlignment);
+  });
+
   displayCurrentWord();
   updateProgress();
   showView('reader');
@@ -508,7 +514,9 @@ function saveNote() {
 }
 
 function loadNote(noteId) {
-  const note = state.notes.find(n => n.id === noteId);
+  // Convert to number since dataset values are strings
+  const id = Number(noteId);
+  const note = state.notes.find(n => n.id === id);
   if (!note) return;
 
   elements.textInput.value = note.content;
@@ -523,7 +531,9 @@ function loadNote(noteId) {
 function deleteNote(noteId) {
   if (!confirm('Delete this note?')) return;
 
-  state.notes = state.notes.filter(n => n.id !== noteId);
+  // Convert to number since dataset values are strings
+  const id = Number(noteId);
+  state.notes = state.notes.filter(n => n.id !== id);
   storage.saveNotes(state.notes);
   renderNotesList();
 }
@@ -731,20 +741,45 @@ function initEventListeners() {
   // WPM slider (input view)
   elements.wpmSlider.addEventListener('input', handleWpmChange);
 
-  // Alignment buttons
+  // Alignment buttons (input view)
   elements.alignmentBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       // Update state
       state.orpAlignment = btn.dataset.align;
 
-      // Update active class
+      // Update active class on both button sets
       elements.alignmentBtns.forEach(b => b.classList.remove('active'));
+      elements.readerAlignBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      // Also activate matching reader button
+      elements.readerAlignBtns.forEach(b => {
+        if (b.dataset.align === btn.dataset.align) b.classList.add('active');
+      });
 
       // If in reader, update display
       if (state.words.length > 0) {
         displayCurrentWord();
       }
+    });
+  });
+
+  // Reader alignment buttons (syncs with input view)
+  elements.readerAlignBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Update state
+      state.orpAlignment = btn.dataset.align;
+
+      // Update active class on both button sets
+      elements.alignmentBtns.forEach(b => b.classList.remove('active'));
+      elements.readerAlignBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // Also activate matching input button
+      elements.alignmentBtns.forEach(b => {
+        if (b.dataset.align === btn.dataset.align) b.classList.add('active');
+      });
+
+      // Update display immediately
+      displayCurrentWord();
     });
   });
 

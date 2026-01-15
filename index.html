@@ -167,10 +167,20 @@
         </button>
       </div>
 
-      <!-- WPM Slider Control -->
-      <div class="reader-wpm-control">
-        <input type="range" id="reader-wpm-slider" class="slider" min="100" max="1000" step="25" value="300">
-        <span id="reader-wpm" class="reader-wpm-value">300 wpm</span>
+      <!-- Reader Controls Row -->
+      <div class="reader-settings-row">
+        <!-- Alignment Control -->
+        <div class="reader-alignment-control">
+          <button type="button" class="reader-align-btn active" data-align="left" title="Left aligned">◀</button>
+          <button type="button" class="reader-align-btn" data-align="center" title="Center aligned">●</button>
+          <button type="button" class="reader-align-btn" data-align="right" title="Right aligned">▶</button>
+        </div>
+
+        <!-- WPM Slider Control -->
+        <div class="reader-wpm-control">
+          <input type="range" id="reader-wpm-slider" class="slider" min="100" max="1000" step="25" value="300">
+          <span id="reader-wpm" class="reader-wpm-value">300 wpm</span>
+        </div>
       </div>
     </div>
   </div>

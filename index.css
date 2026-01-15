@@ -578,16 +578,57 @@ a:hover {
   font-size: 1.5rem;
 }
 
+/* Reader settings row - contains alignment and WPM controls */
+.reader-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xl);
+  margin-top: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+/* Reader alignment control */
+.reader-alignment-control {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: 2px;
+}
+
+.reader-align-btn {
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 36px;
+}
+
+.reader-align-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.reader-align-btn.active {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
 .reader-wpm-control {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-md);
-  margin-top: var(--space-lg);
 }
 
 .reader-wpm-control .slider {
-  width: 200px;
+  width: 150px;
 }
 
 .reader-wpm-value {
