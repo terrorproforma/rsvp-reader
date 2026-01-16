@@ -922,6 +922,7 @@ a:hover {
   margin-bottom: var(--space-xl);
   border-bottom: 1px solid var(--border);
   padding-bottom: var(--space-md);
+  align-items: center;
 }
 
 .nav-tab {
@@ -942,6 +943,106 @@ a:hover {
 
 .nav-tab.active {
   color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+/* Auth UI */
+.auth-container {
+  margin-left: auto;
+  position: relative;
+}
+
+.login-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.login-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent);
+}
+
+.login-btn svg {
+  flex-shrink: 0;
+}
+
+.user-profile {
+  position: relative;
+  cursor: pointer;
+}
+
+.user-profile.hidden {
+  display: none;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  transition: border-color var(--transition-fast);
+}
+
+.user-profile:hover .user-avatar {
+  border-color: var(--accent);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-xs);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  min-width: 150px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all var(--transition-fast);
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.user-profile:hover .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.user-name {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-xs);
+}
+
+.logout-btn {
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.logout-btn:hover {
   background: var(--bg-tertiary);
 }
 

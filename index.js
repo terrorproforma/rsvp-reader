@@ -26,7 +26,8 @@ const state = {
     period: 2.0,   // . ! ?
     comma: 1.25,   // ,
     colon: 1.5     // : ;
-  }
+  },
+  currentUser: null // Firebase user object
 };
 
 // ================================
@@ -88,7 +89,14 @@ const elements = {
   confirmSaveBtn: document.getElementById('confirm-save-btn'),
 
   // Nav tabs
-  navTabs: document.querySelectorAll('.nav-tab')
+  navTabs: document.querySelectorAll('.nav-tab'),
+
+  // Auth
+  loginBtn: document.getElementById('login-btn'),
+  userProfile: document.getElementById('user-profile'),
+  userAvatar: document.getElementById('user-avatar'),
+  userName: document.getElementById('user-name'),
+  logoutBtn: document.getElementById('logout-btn')
 };
 
 // ================================
@@ -162,7 +170,26 @@ function generateId() {
 const storage = {
   NOTES_KEY: 'rsvp_notes',
 
-  loadNotes() {
+  // Check if user is logged in
+  isLoggedIn() {
+    return state.currentUser !== null;
+  },
+
+  // Load notes - from Firestore if logged in, localStorage otherwise
+  async loadNotes() {
+    if (this.isLoggedIn() && window.firestoreStorage) {
+      try {
+        return await window.firestoreStorage.loadNotes(state.currentUser.uid);
+      } catch (e) {
+        console.error('Failed to load from Firestore, falling back to localStorage:', e);
+        return this.loadLocalNotes();
+      }
+    }
+    return this.loadLocalNotes();
+  },
+
+  // Load from localStorage
+  loadLocalNotes() {
     try {
       const data = localStorage.getItem(this.NOTES_KEY);
       return data ? JSON.parse(data) : [];
@@ -172,11 +199,73 @@ const storage = {
     }
   },
 
-  saveNotes(notes) {
+  // Save notes - to Firestore if logged in, localStorage otherwise
+  async saveNotes(notes) {
+    // Always save to localStorage as backup
+    this.saveLocalNotes(notes);
+
+    // Also save to Firestore if logged in
+    if (this.isLoggedIn() && window.firestoreStorage) {
+      try {
+        await window.firestoreStorage.syncNotes(state.currentUser.uid, notes);
+      } catch (e) {
+        console.error('Failed to save to Firestore:', e);
+      }
+    }
+  },
+
+  // Save to localStorage
+  saveLocalNotes(notes) {
     try {
       localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
     } catch (e) {
       console.error('Failed to save notes:', e);
+    }
+  },
+
+  // Save a single note
+  async saveNote(note) {
+    if (this.isLoggedIn() && window.firestoreStorage) {
+      try {
+        await window.firestoreStorage.saveNote(state.currentUser.uid, note);
+      } catch (e) {
+        console.error('Failed to save note to Firestore:', e);
+      }
+    }
+  },
+
+  // Delete a single note
+  async deleteNote(noteId) {
+    if (this.isLoggedIn() && window.firestoreStorage) {
+      try {
+        await window.firestoreStorage.deleteNote(state.currentUser.uid, noteId);
+      } catch (e) {
+        console.error('Failed to delete note from Firestore:', e);
+      }
+    }
+  },
+
+  // Migrate localStorage notes to Firestore on login
+  async migrateToCloud() {
+    if (!this.isLoggedIn() || !window.firestoreStorage) return;
+
+    const localNotes = this.loadLocalNotes();
+    if (localNotes.length === 0) return;
+
+    try {
+      // Get existing cloud notes
+      const cloudNotes = await window.firestoreStorage.loadNotes(state.currentUser.uid);
+      const cloudIds = new Set(cloudNotes.map(n => String(n.id)));
+
+      // Find notes that don't exist in cloud
+      const newNotes = localNotes.filter(n => !cloudIds.has(String(n.id)));
+
+      if (newNotes.length > 0) {
+        await window.firestoreStorage.syncNotes(state.currentUser.uid, newNotes);
+        console.log(`Migrated ${newNotes.length} notes to cloud`);
+      }
+    } catch (e) {
+      console.error('Failed to migrate notes:', e);
     }
   }
 };
@@ -577,11 +666,15 @@ function loadNote(noteId) {
   storage.saveNotes(state.notes);
 }
 
-function deleteNote(noteId) {
+async function deleteNote(noteId) {
   if (!confirm('Delete this note?')) return;
 
   // Convert to number since dataset values are strings
   const id = Number(noteId);
+
+  // Delete from Firestore if logged in
+  await storage.deleteNote(id);
+
   state.notes = state.notes.filter(n => n.id !== id);
   storage.saveNotes(state.notes);
   renderNotesList();
@@ -882,14 +975,89 @@ function initEventListeners() {
 }
 
 // ================================
+// AUTHENTICATION
+// ================================
+
+function updateAuthUI(user) {
+  if (user) {
+    // User is signed in
+    elements.loginBtn.style.display = 'none';
+    elements.userProfile.classList.remove('hidden');
+    elements.userAvatar.src = user.photoURL || '';
+    elements.userName.textContent = user.displayName || user.email;
+  } else {
+    // User is signed out
+    elements.loginBtn.style.display = 'flex';
+    elements.userProfile.classList.add('hidden');
+  }
+}
+
+async function handleLogin() {
+  try {
+    const user = await window.firebaseAuth.signInWithGoogle();
+    console.log('Signed in as:', user.displayName);
+
+    // Migrate local notes to cloud
+    await storage.migrateToCloud();
+
+    // Reload notes from cloud
+    state.notes = await storage.loadNotes();
+    renderNotesList();
+  } catch (error) {
+    console.error('Login failed:', error);
+    alert('Sign in failed. Please try again.');
+  }
+}
+
+async function handleLogout() {
+  try {
+    await window.firebaseAuth.signOut();
+    console.log('Signed out');
+
+    // Reload notes from localStorage
+    state.notes = storage.loadLocalNotes();
+    renderNotesList();
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+}
+
+function initAuthListeners() {
+  // Only set up auth if Firebase is loaded
+  if (!window.firebaseAuth) {
+    console.log('Firebase not loaded, running in offline mode');
+    return;
+  }
+
+  // Listen for auth state changes
+  window.firebaseAuth.onAuthStateChanged(async (user) => {
+    state.currentUser = user;
+    updateAuthUI(user);
+
+    if (user) {
+      // User just logged in, reload notes from cloud
+      state.notes = await storage.loadNotes();
+      renderNotesList();
+    }
+  });
+
+  // Login button click
+  if (elements.loginBtn) {
+    elements.loginBtn.addEventListener('click', handleLogin);
+  }
+
+  // Logout button click
+  if (elements.logoutBtn) {
+    elements.logoutBtn.addEventListener('click', handleLogout);
+  }
+}
+
+// ================================
 // INITIALIZATION
 // ================================
 
-function init() {
-  // Load saved notes
-  state.notes = storage.loadNotes();
-
-  // Initialize event listeners
+async function init() {
+  // Initialize event listeners (non-auth)
   initEventListeners();
 
   // Set initial WPM display
@@ -898,6 +1066,12 @@ function init() {
 
   // Initialize word count from default textarea content
   handleTextInput();
+
+  // Load saved notes (from localStorage initially - will reload from cloud if user logs in)
+  state.notes = storage.loadLocalNotes();
+
+  // Initialize auth listeners (this will trigger reload if user is already logged in)
+  initAuthListeners();
 
   // Add sample note for first-time users (fetch full Accelerando text)
   // Also replace old partial sample if it exists
@@ -933,7 +1107,11 @@ function init() {
         console.log('Could not load sample text:', err);
       });
   }
+
+  // Render initial notes list
+  renderNotesList();
 }
 
 // Start the app
 document.addEventListener('DOMContentLoaded', init);
+
