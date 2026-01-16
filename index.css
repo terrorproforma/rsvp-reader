@@ -631,34 +631,68 @@ a:hover {
   display: flex;
 }
 
+/* Focus lines container - just for positioning */
 .reader-focus-lines {
   position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--border);
-  transform: translateX(-50%);
+  inset: 0;
   pointer-events: none;
 }
 
-.reader-focus-lines::before,
+/* Top vertical line segment */
+.reader-focus-lines::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 35%;
+  background: var(--border);
+  transform: translateX(-50%);
+}
+
+/* Bottom vertical line segment */
 .reader-focus-lines::after {
   content: '';
   position: absolute;
   left: 50%;
+  bottom: 0;
+  width: 1px;
+  height: 35%;
+  background: var(--border);
   transform: translateX(-50%);
-  width: 40px;
-  height: 2px;
+}
+
+/* Crosshair container - centered */
+.reader-crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Horizontal crosshair line */
+.reader-crosshair::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 1px;
   background: var(--border);
 }
 
-.reader-focus-lines::before {
-  top: 35%;
-}
-
-.reader-focus-lines::after {
-  bottom: 35%;
+/* Vertical crosshair line */
+.reader-crosshair::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px;
+  height: 20px;
+  background: var(--border);
 }
 
 .reader-word-display {

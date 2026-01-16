@@ -21,7 +21,7 @@ const state = {
   isSeeking: false,
   intervalId: null,
   notes: [],
-  orpAlignment: 'left', // 'left', 'center', 'right'
+  orpAlignment: 'center', // 'left', 'center', 'right'
   pauseMultipliers: {
     period: 2.0,   // . ! ?
     comma: 1.25,   // ,
