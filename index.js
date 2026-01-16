@@ -899,23 +899,27 @@ function init() {
   // Initialize word count from default textarea content
   handleTextInput();
 
-  // Add sample note for first-time users (Accelerando excerpt)
+  // Add sample note for first-time users (fetch full Accelerando text)
   if (state.notes.length === 0) {
-    const sampleNote = {
-      id: Date.now(),
-      title: 'Accelerando - Chapter 1 (Sample)',
-      content: `Manfred's on the road again, making strangers rich. It's a hot summer Tuesday, and he's standing in the plaza in front of the Centraal Station with his eyeballs powered up and the sunlight jangling off the canal, motor scooters and kamikaze cyclists whizzing past and tourists chattering on every side. The square smells of water and dirt and hot metal and the fart-laden exhaust fumes of cold catalytic converters; the bells of trams ding in the background, and birds flock overhead. He glances up and grabs a pigeon, crops the shot, and squirts it at his weblog to show he's arrived. The bandwidth is good here, he realizes; and it's not just the bandwidth, it's the whole scene. Amsterdam is making him feel wanted already, even though he's fresh off the train from Schiphol: He's infected with the dynamic optimism of another time zone, another city. If the mood holds, someone out there is going to become very rich indeed. He wonders who it's going to be.
+    fetch('test_text.txt')
+      .then(response => response.text())
+      .then(content => {
+        const words = parseText(content);
+        const sampleNote = {
+          id: Date.now(),
+          title: 'Accelerando by Charles Stross (Full Novel)',
+          content: content,
+          wordCount: words.length,
+          createdAt: new Date().toISOString()
+        };
 
-Manfred sits on a stool out in the car park at the Brouwerij 't IJ, watching the articulated buses go by and drinking a third of a liter of lip-curlingly sour gueuze. His channels are jabbering away in a corner of his head-up display, throwing compressed infobursts of filtered press releases at him. They compete for his attention, bickering and rudely waving in front of the scenery. A couple of punks – maybe local, but more likely drifters lured to Amsterdam by the magnetic field of tolerance the Dutch beam across Europe like a pulsar – are laughing and chatting by a couple of battered mopeds in the far corner. A tourist boat putters by in the canal; the sails of the huge windmill overhead cast long, cool shadows across the road.
-
-Welcome to the twenty-first century. The permanent floating meatspace party Manfred is hooking up with is a strange attractor for some of the American exiles cluttering up the cities of Europe this decade – not trustafarians, but honest-to-God political dissidents, draft dodgers, and terminal outsourcing victims. It's the kind of place where weird connections are made and crossed lines make new short circuits into the future.`,
-      wordCount: 350,
-      createdAt: new Date().toISOString()
-    };
-
-    state.notes.push(sampleNote);
-    storage.saveNotes(state.notes);
-    renderNotesList();
+        state.notes.push(sampleNote);
+        storage.saveNotes(state.notes);
+        renderNotesList();
+      })
+      .catch(err => {
+        console.log('Could not load sample text:', err);
+      });
   }
 }
 
