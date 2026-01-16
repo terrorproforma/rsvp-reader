@@ -267,7 +267,11 @@ function startReading() {
   if (state.words.length === 0) return;
 
   state.isPlaying = true;
-  elements.playPauseBtn.innerHTML = '⏸';
+  // Toggle to pause icon
+  const playIcon = elements.playPauseBtn.querySelector('.play-icon');
+  const pauseIcon = elements.playPauseBtn.querySelector('.pause-icon');
+  if (playIcon) playIcon.style.display = 'none';
+  if (pauseIcon) pauseIcon.style.display = 'block';
 
   scheduleNextWord();
 }
@@ -313,7 +317,11 @@ function getPunctuationMultiplier(word) {
 
 function stopReading() {
   state.isPlaying = false;
-  elements.playPauseBtn.innerHTML = '▶';
+  // Toggle to play icon
+  const playIcon = elements.playPauseBtn.querySelector('.play-icon');
+  const pauseIcon = elements.playPauseBtn.querySelector('.pause-icon');
+  if (playIcon) playIcon.style.display = 'block';
+  if (pauseIcon) pauseIcon.style.display = 'none';
 
   if (state.intervalId) {
     clearTimeout(state.intervalId);

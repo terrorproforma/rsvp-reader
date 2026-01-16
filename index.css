@@ -1127,8 +1127,24 @@ a:hover {
      READER VIEW - MOBILE
      ================================ */
   .reader-view {
-    padding-bottom: 180px;
-    /* More space for controls */
+    /* Use flex layout for proper distribution */
+    overflow: hidden;
+  }
+
+  /* Adjust focus lines for mobile - account for controls area */
+  .reader-focus-lines::before {
+    height: 30%;
+  }
+
+  .reader-focus-lines::after {
+    height: 25%;
+    bottom: auto;
+    top: 55%;
+  }
+
+  /* Crosshair needs to be positioned higher on mobile due to controls */
+  .reader-crosshair {
+    top: 45%;
   }
 
   .reader-exit {
@@ -1144,16 +1160,26 @@ a:hover {
 
   /* Reader controls - stack vertically */
   .reader-controls {
-    padding: var(--space-md);
-    padding-bottom: env(safe-area-inset-bottom, var(--space-md));
+    position: relative;
+    padding: var(--space-sm) var(--space-md);
+    padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--bg-primary) 90%, transparent);
+    flex-shrink: 0;
   }
 
   .reader-progress {
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-sm);
   }
 
   .reader-progress-info {
     font-size: 0.7rem;
+  }
+
+  /* Settings row - more compact on mobile */
+  .reader-settings-row {
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
+    padding-bottom: var(--space-xs);
   }
 
   /* Progress bar - taller for easier touch */
@@ -1168,20 +1194,37 @@ a:hover {
 
   /* Reader buttons - larger touch targets */
   .reader-buttons {
-    gap: var(--space-xl);
-    margin-bottom: var(--space-md);
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xs);
   }
 
   .reader-buttons .btn-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 1.25rem;
+    width: 44px;
+    height: 44px;
+    font-size: 1rem;
   }
 
   .play-btn {
-    width: 70px;
-    height: 70px;
-    font-size: 1.75rem;
+    width: 56px;
+    height: 56px;
+    font-size: 1.25rem;
+  }
+
+  /* Alignment buttons - smaller on mobile */
+  .reader-align-btn {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+    min-width: 28px;
+  }
+
+  /* WPM slider - more compact */
+  .reader-wpm-control .slider {
+    width: 100px;
+  }
+
+  .reader-wpm-value {
+    font-size: 0.8rem;
+    min-width: 60px;
   }
 
   /* WPM control - better mobile layout */
