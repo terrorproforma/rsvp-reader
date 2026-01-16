@@ -625,6 +625,9 @@ a:hover {
   background: var(--bg-primary);
   display: none;
   flex-direction: column;
+  /* Support for iOS Safari viewport */
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
 }
 
 .reader-view.active {
@@ -1129,28 +1132,39 @@ a:hover {
   .reader-view {
     /* Use flex layout for proper distribution */
     overflow: hidden;
+    /* Account for iOS Safari dynamic viewport */
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  /* Word display area - flex grow to fill available space */
+  .reader-word-display {
+    flex: 1;
+    min-height: 0;
   }
 
   /* Adjust focus lines for mobile - account for controls area */
   .reader-focus-lines::before {
-    height: 30%;
+    height: 25%;
   }
 
   .reader-focus-lines::after {
-    height: 25%;
+    height: 20%;
     bottom: auto;
-    top: 55%;
+    top: 50%;
   }
 
-  /* Crosshair needs to be positioned higher on mobile due to controls */
+  /* Crosshair needs to be positioned much higher on mobile due to controls + browser UI */
   .reader-crosshair {
-    top: 45%;
+    top: 35%;
   }
 
   .reader-exit {
     padding: var(--space-sm) var(--space-md);
     font-size: 0.875rem;
     min-height: 44px;
+    /* Account for notch/dynamic island */
+    top: max(var(--space-lg), env(safe-area-inset-top, 20px));
   }
 
   /* Word display - smaller font on mobile */
@@ -1158,12 +1172,13 @@ a:hover {
     font-size: clamp(2rem, 12vw, 4rem);
   }
 
-  /* Reader controls - stack vertically */
+  /* Reader controls - position at bottom with large safe area padding */
   .reader-controls {
     position: relative;
     padding: var(--space-sm) var(--space-md);
-    padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
-    background: linear-gradient(to top, var(--bg-primary) 90%, transparent);
+    /* Large bottom padding to account for Safari bottom bar + home indicator */
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 34px));
+    background: linear-gradient(to top, var(--bg-primary) 85%, transparent);
     flex-shrink: 0;
   }
 
