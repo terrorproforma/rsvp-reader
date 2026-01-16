@@ -27,11 +27,24 @@ const firebaseAuth = {
     // Current user state
     currentUser: null,
 
-    // Sign in with Google popup
+    // Detect if running on mobile
+    isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    },
+
+    // Sign in with Google - uses redirect on mobile, popup on desktop
     async signInWithGoogle() {
         try {
-            const result = await auth.signInWithPopup(googleProvider);
-            return result.user;
+            if (this.isMobile()) {
+                // Mobile: use redirect flow (more reliable on iOS Safari)
+                await auth.signInWithRedirect(googleProvider);
+                // After redirect, the page will reload and onAuthStateChanged will fire
+                return null;
+            } else {
+                // Desktop: use popup
+                const result = await auth.signInWithPopup(googleProvider);
+                return result.user;
+            }
         } catch (error) {
             console.error('Sign in error:', error);
             throw error;
