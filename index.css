@@ -1167,6 +1167,33 @@ a:hover {
 /* Responsive */
 @media (max-width: 600px) {
 
+  /* Auth UI - Mobile */
+  .auth-container {
+    position: absolute;
+    right: var(--space-md);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .login-btn {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+  }
+
+  .login-btn span {
+    display: none;
+    /* Hide "Sign in" text on mobile, show just icon */
+  }
+
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .nav-tabs {
+    position: relative;
+  }
+
   /* Container */
   .container {
     padding: var(--space-md);
