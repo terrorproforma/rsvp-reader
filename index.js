@@ -900,7 +900,19 @@ function init() {
   handleTextInput();
 
   // Add sample note for first-time users (fetch full Accelerando text)
-  if (state.notes.length === 0) {
+  // Also replace old partial sample if it exists
+  const oldSampleIndex = state.notes.findIndex(n =>
+    n.title.includes('Accelerando') && n.wordCount < 1000
+  );
+
+  if (state.notes.length === 0 || oldSampleIndex !== -1) {
+    // Remove old partial sample if it exists
+    if (oldSampleIndex !== -1) {
+      state.notes.splice(oldSampleIndex, 1);
+      storage.saveNotes(state.notes);
+      renderNotesList();
+    }
+
     fetch('test_text.txt')
       .then(response => response.text())
       .then(content => {
