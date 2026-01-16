@@ -48,11 +48,45 @@
         </div>
         <textarea id="text-input" class="textarea"
           placeholder="Paste any article, book chapter, or text you want to speed read... or drag & drop a .txt file here"
-          spellcheck="false"></textarea>
+          spellcheck="false">Welcome to RSVP Speed Reader!
+
+RSVP (Rapid Serial Visual Presentation) displays text one word at a time, allowing you to read much faster than traditional methods. The red highlighted letter is the Optimal Recognition Point (ORP) — your eye naturally focuses here.
+
+HOW TO USE:
+• Paste or type any text in this box
+• Adjust your reading speed (WPM) below
+• Click "Start Reading" to begin
+• Use Space to pause/resume
+
+KEYBOARD SHORTCUTS:
+• Space — Play/Pause
+• ← → Arrow keys — Skip words
+• ↑ ↓ Arrow keys — Adjust speed
+• Escape — Exit reader
+
+FEATURES:
+• Adjustable speed from 100-1000 WPM
+• Smart punctuation pauses (configurable)
+• Focus point alignment options
+• Save texts as notes for later
+• Seekable progress bar
+• Upload .txt files or drag & drop
+
+Try it now — clear this text and paste something you want to read!</textarea>
         <div class="word-count">
           <span id="word-count">0</span> words · <span id="reading-time">0</span> min at current speed
         </div>
       </section>
+
+      <!-- Action Buttons (directly after text input) -->
+      <div class="action-buttons slide-up">
+        <button id="start-btn" class="btn btn-primary btn-lg">
+          ▶ Start Reading
+        </button>
+        <button id="save-btn" class="btn btn-secondary btn-lg">
+          💾 Save as Note
+        </button>
+      </div>
 
       <!-- Settings -->
       <section class="settings-section slide-up">
@@ -101,16 +135,6 @@
           </div>
         </div>
       </details>
-
-      <!-- Action Buttons -->
-      <div class="action-buttons slide-up">
-        <button id="start-btn" class="btn btn-primary btn-lg">
-          ▶ Start Reading
-        </button>
-        <button id="save-btn" class="btn btn-secondary btn-lg">
-          💾 Save as Note
-        </button>
-      </div>
 
       <!-- Keyboard Hints -->
       <div class="keyboard-hints shortcuts"

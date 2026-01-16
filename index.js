@@ -896,6 +896,9 @@ function init() {
   elements.wpmDisplay.textContent = `${state.wpm} wpm`;
   elements.readerWpm.textContent = `${state.wpm} wpm`;
 
+  // Initialize word count from default textarea content
+  handleTextInput();
+
   // Add sample note for first-time users (Accelerando excerpt)
   if (state.notes.length === 0) {
     const sampleNote = {
@@ -913,10 +916,6 @@ Welcome to the twenty-first century. The permanent floating meatspace party Manf
     state.notes.push(sampleNote);
     storage.saveNotes(state.notes);
     renderNotesList();
-
-    // Also set the tutorial text in the input
-    elements.textInput.value = `Welcome to RSVP Speed Reader! This technique helps you read faster by showing one word at a time in the center of your vision. The red letter is the Optimal Recognition Point, where your eye naturally focuses. Try adjusting the speed with the slider, then click Start Reading. Use Space to pause, and arrow keys to navigate. Happy speed reading!`;
-    handleTextInput();
   }
 }
 
