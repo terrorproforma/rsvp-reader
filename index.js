@@ -1029,6 +1029,38 @@ async function handleLogout() {
   }
 }
 
+// Helper function to add sample Accelerando note for new users
+async function addSampleNoteIfNeeded() {
+  // Check if user already has the Accelerando sample note
+  const hasAccelerando = state.notes.some(n =>
+    n.title && n.title.includes('Accelerando')
+  );
+
+  if (hasAccelerando) {
+    return; // Already has the sample note
+  }
+
+  try {
+    const response = await fetch('test_text.txt');
+    const content = await response.text();
+    const words = parseText(content);
+
+    const sampleNote = {
+      id: 'accelerando-sample',
+      title: 'Accelerando by Charles Stross (Full Novel)',
+      content: content,
+      wordCount: words.length,
+      createdAt: new Date().toISOString()
+    };
+
+    state.notes.push(sampleNote);
+    await storage.saveNotes(state.notes);
+    console.log('Added Accelerando sample note for new user');
+  } catch (err) {
+    console.log('Could not load sample text:', err);
+  }
+}
+
 function initAuthListeners() {
   // Only set up auth if Firebase is loaded
   if (!window.firebaseAuth) {
@@ -1048,6 +1080,10 @@ function initAuthListeners() {
         // User just logged in, migrate local notes and reload from cloud
         await storage.migrateToCloud();
         state.notes = await storage.loadNotes();
+
+        // Add sample note for new users with empty cloud storage
+        await addSampleNoteIfNeeded();
+
         renderNotesList();
       }
     });
@@ -1094,40 +1130,8 @@ async function init() {
   // Initialize auth listeners (this will trigger reload if user is already logged in)
   initAuthListeners();
 
-  // Add sample note for first-time users (fetch full Accelerando text)
-  // Also replace old partial sample if it exists
-  const oldSampleIndex = state.notes.findIndex(n =>
-    n.title.includes('Accelerando') && n.wordCount < 1000
-  );
-
-  if (state.notes.length === 0 || oldSampleIndex !== -1) {
-    // Remove old partial sample if it exists
-    if (oldSampleIndex !== -1) {
-      state.notes.splice(oldSampleIndex, 1);
-      storage.saveNotes(state.notes);
-      renderNotesList();
-    }
-
-    fetch('test_text.txt')
-      .then(response => response.text())
-      .then(content => {
-        const words = parseText(content);
-        const sampleNote = {
-          id: Date.now(),
-          title: 'Accelerando by Charles Stross (Full Novel)',
-          content: content,
-          wordCount: words.length,
-          createdAt: new Date().toISOString()
-        };
-
-        state.notes.push(sampleNote);
-        storage.saveNotes(state.notes);
-        renderNotesList();
-      })
-      .catch(err => {
-        console.log('Could not load sample text:', err);
-      });
-  }
+  // Add sample note for first-time users (non-logged-in)
+  await addSampleNoteIfNeeded();
 
   // Render initial notes list
   renderNotesList();
