@@ -106,19 +106,39 @@ const firebaseAuth = {
     // Check if user is logged in
     isLoggedIn() {
         return this.currentUser !== null;
+    },
+
+    // Get current user (may return null if not yet determined)
+    getCurrentUser() {
+        return auth.currentUser;
     }
 };
 
+// Set persistence to LOCAL for better mobile support
+// This helps with iOS Safari which may have strict cookie policies
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+    .then(() => {
+        console.log('Auth persistence set to LOCAL');
+    })
+    .catch((error) => {
+        console.error('Error setting persistence:', error);
+    });
+
 // Handle redirect result on page load (important for mobile auth)
-auth.getRedirectResult().then((result) => {
+// Store the promise so it can be awaited if needed
+window.firebaseRedirectPromise = auth.getRedirectResult().then((result) => {
     if (result && result.user) {
         console.log('Redirect sign-in completed:', result.user.displayName);
+        // The onAuthStateChanged listener will handle the UI update
+        return result.user;
     }
+    return null;
 }).catch((error) => {
     // Common errors: popup closed, redirect cancelled, etc.
     if (error.code !== 'auth/redirect-cancelled-by-user') {
         console.error('Redirect auth error:', error);
     }
+    return null;
 });
 
 // ================================

@@ -1040,17 +1040,31 @@ function initAuthListeners() {
     return;
   }
 
-  // Listen for auth state changes
-  window.firebaseAuth.onAuthStateChanged(async (user) => {
-    state.currentUser = user;
-    updateAuthUI(user);
+  // Wait for redirect result first (important for mobile auth)
+  // This ensures we capture the user from a redirect sign-in
+  const setupAuthListener = () => {
+    window.firebaseAuth.onAuthStateChanged(async (user) => {
+      console.log('Auth state changed:', user ? user.displayName : 'signed out');
+      state.currentUser = user;
+      updateAuthUI(user);
 
-    if (user) {
-      // User just logged in, reload notes from cloud
-      state.notes = await storage.loadNotes();
-      renderNotesList();
-    }
-  });
+      if (user) {
+        // User just logged in, migrate local notes and reload from cloud
+        await storage.migrateToCloud();
+        state.notes = await storage.loadNotes();
+        renderNotesList();
+      }
+    });
+  };
+
+  // If there's a pending redirect result, wait for it
+  if (window.firebaseRedirectPromise) {
+    window.firebaseRedirectPromise.then(() => {
+      setupAuthListener();
+    });
+  } else {
+    setupAuthListener();
+  }
 
   // Login button click
   if (elements.loginBtn) {
