@@ -43,6 +43,8 @@ const elements = {
   // Input
   textInput: document.getElementById('text-input'),
   fileInput: document.getElementById('file-input'),
+  urlInput: document.getElementById('url-input'),
+  importUrlBtn: document.getElementById('import-url-btn'),
   wordCount: document.getElementById('word-count'),
   readingTime: document.getElementById('reading-time'),
   wpmSlider: document.getElementById('wpm-slider'),
@@ -861,6 +863,63 @@ function readTextFile(file) {
 }
 
 // ================================
+// URL IMPORT
+// ================================
+
+async function handleUrlImport() {
+  const url = elements.urlInput.value.trim();
+
+  if (!url) {
+    alert('Please enter a URL');
+    return;
+  }
+
+  // Validate URL format
+  try {
+    new URL(url);
+  } catch {
+    alert('Please enter a valid URL');
+    return;
+  }
+
+  // Show loading state
+  const btn = elements.importUrlBtn;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '⏳ Loading...';
+  btn.classList.add('loading');
+
+  try {
+    const response = await fetch(`/api/extract-article?url=${encodeURIComponent(url)}`);
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error || 'Failed to extract article');
+    }
+
+    // Populate the textarea with extracted content
+    const header = `${data.title}\n\n`;
+    elements.textInput.value = header + data.content;
+    handleTextInput();
+
+    // Clear URL input
+    elements.urlInput.value = '';
+
+    // Success feedback
+    btn.innerHTML = '✓ Imported!';
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+    }, 2000);
+
+  } catch (error) {
+    console.error('URL import error:', error);
+    alert(`Could not import article: ${error.message}`);
+    btn.innerHTML = originalText;
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+// ================================
 // EVENT LISTENERS
 // ================================
 
@@ -870,6 +929,19 @@ function initEventListeners() {
 
   // File upload
   elements.fileInput.addEventListener('change', handleFileUpload);
+
+  // URL import
+  if (elements.importUrlBtn) {
+    elements.importUrlBtn.addEventListener('click', handleUrlImport);
+  }
+  if (elements.urlInput) {
+    elements.urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleUrlImport();
+      }
+    });
+  }
 
   // Drag and drop on textarea
   elements.textInput.addEventListener('dragover', handleDragOver);
