@@ -88,13 +88,10 @@ RULES:
 3. PRESERVE all paragraph breaks (newlines) exactly as they are
 4. Only REMOVE the following types of noise:
 
-FOR START: Remove lines containing:
-- "Welcome to the X newly" or subscriber counts
-- "Hi friends" or casual author greetings  
-- "Join X curious folks by subscribing"
-- "Subscribe" prompts or buttons
-- Date/share metadata lines
-- Keep the actual article content starting point
+FOR START: Remove ONLY these specific types of lines:
+- Subscriber count lines like "Welcome to the X newly..." or "Join X,XXX subscribers"
+- "Subscribe here" prompts or subscription links
+- Do NOT remove author greetings like "Hi friends" - these are part of the article
 
 FOR END: Remove lines containing:
 - "Thanks for reading" / "That's all for today"
