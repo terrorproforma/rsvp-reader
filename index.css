@@ -1397,9 +1397,12 @@ a:hover {
     padding: var(--space-lg) var(--space-md);
   }
 
+  .notes-list {
+    gap: var(--space-sm);
+  }
+
   /* Note cards - ensure delete button visible */
   .note-card {
-    padding: var(--space-md);
     position: relative;
   }
 
