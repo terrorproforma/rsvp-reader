@@ -652,9 +652,8 @@ function saveNote() {
 }
 
 function loadNote(noteId) {
-  // Convert to number since dataset values are strings
-  const id = Number(noteId);
-  const note = state.notes.find(n => n.id === id);
+  // Find note by ID (compare as strings since IDs can be alphanumeric)
+  const note = state.notes.find(n => String(n.id) === String(noteId));
   if (!note) return;
 
   elements.textInput.value = note.content;
@@ -669,13 +668,10 @@ function loadNote(noteId) {
 async function deleteNote(noteId) {
   if (!confirm('Delete this note?')) return;
 
-  // Convert to number since dataset values are strings
-  const id = Number(noteId);
-
   // Delete from Firestore if logged in
-  await storage.deleteNote(id);
+  await storage.deleteNote(noteId);
 
-  state.notes = state.notes.filter(n => n.id !== id);
+  state.notes = state.notes.filter(n => String(n.id) !== String(noteId));
   storage.saveNotes(state.notes);
   renderNotesList();
 }
