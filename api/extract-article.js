@@ -80,22 +80,42 @@ async function cleanWithGeminiChunked(text, apiKey) {
             return await cleanFullWithGemini(text, apiKey);
         }
 
-        const prompt = `You are cleaning article text. I'll give you the START and END chunks of an article.
+        const prompt = `You are a text trimmer. Your job is to REMOVE noise from the START and END of article text, preserving EXACT formatting and content otherwise.
 
-For the START chunk: Remove any newsletter intro, subscription prompts, "Welcome to X subscribers", author greetings like "Hi friends", dates, share buttons text. Keep the actual article beginning.
+RULES:
+1. Do NOT add any new text (no titles, no summaries)
+2. Do NOT rewrite or rephrase anything
+3. PRESERVE all paragraph breaks (newlines) exactly as they are
+4. Only REMOVE the following types of noise:
 
-For the END chunk: Remove "Thanks for reading", author sign-offs, paywall notices, subscription prompts, "Keep reading with a free trial". Keep the actual article ending.
+FOR START: Remove lines containing:
+- "Welcome to the X newly" or subscriber counts
+- "Hi friends" or casual author greetings  
+- "Join X curious folks by subscribing"
+- "Subscribe" prompts or buttons
+- Date/share metadata lines
+- Keep the actual article content starting point
 
-Return ONLY two sections, exactly like this:
----START CLEANED---
-[cleaned start text here]
----END CLEANED---
-[cleaned end text here]
+FOR END: Remove lines containing:
+- "Thanks for reading" / "That's all for today"
+- Author sign-offs (e.g., "Packy", "Best, [Name]")
+- Paywall notices / "Keep reading with a free trial"
+- "Join us behind the paywall"
+- Sponsor thanks / credits lines
 
-START CHUNK:
+Return your response in this EXACT format:
+
+===START===
+[trimmed start chunk, with original formatting preserved]
+===END===
+[trimmed end chunk, with original formatting preserved]
+
+---
+START CHUNK TO TRIM:
 ${startChunk}
 
-END CHUNK:
+---
+END CHUNK TO TRIM:
 ${endChunk}`;
 
         const response = await fetch(
@@ -105,7 +125,7 @@ ${endChunk}`;
                 headers: { 'Content-Type': 'application/json', 'X-goog-api-key': apiKey },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { maxOutputTokens: 4000, temperature: 0.1 }
+                    generationConfig: { maxOutputTokens: 4000, temperature: 0 }
                 })
             }
         );
@@ -120,14 +140,16 @@ ${endChunk}`;
         if (!result) return null;
 
         // Parse the cleaned chunks
-        const startMatch = result.match(/---START CLEANED---\s*([\s\S]*?)---END CLEANED---/);
-        const endMatch = result.match(/---END CLEANED---\s*([\s\S]*)$/);
+        const startMatch = result.match(/===START===\s*([\s\S]*?)===END===/);
+        const endMatch = result.match(/===END===\s*([\s\S]*)$/);
 
         if (startMatch && endMatch) {
             const cleanedStart = startMatch[1].trim();
             const cleanedEnd = endMatch[1].trim();
             const middle = text.substring(middleStart, middleEnd);
-            return cleanedStart + middle + cleanedEnd;
+
+            // Preserve paragraph structure with proper spacing
+            return cleanedStart + '\n\n' + middle + '\n\n' + cleanedEnd;
         }
 
         return null;
