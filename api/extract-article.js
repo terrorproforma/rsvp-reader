@@ -112,6 +112,10 @@ ${startChunk}
 END CHUNK TO TRIM:
 ${endChunk}`;
 
+        // 6 second timeout for Gemini (leave buffer before Vercel's 10s limit)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
         const response = await fetch(
             'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
             {
@@ -120,9 +124,12 @@ ${endChunk}`;
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: { maxOutputTokens: 4000, temperature: 0 }
-                })
+                }),
+                signal: controller.signal
             }
         );
+
+        clearTimeout(timeoutId);
 
         const data = await response.json();
         if (!response.ok) {
@@ -148,7 +155,11 @@ ${endChunk}`;
 
         return null;
     } catch (error) {
-        console.error('Gemini chunk error:', error);
+        if (error.name === 'AbortError') {
+            console.log('Gemini timeout - falling back to Diffbot only');
+        } else {
+            console.error('Gemini chunk error:', error);
+        }
         return null;
     }
 }
