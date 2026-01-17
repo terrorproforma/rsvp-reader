@@ -26,11 +26,59 @@ export default async function handler(request) {
         );
     }
 
+    // Get Diffbot API token from environment
+    const diffbotToken = process.env.DIFFBOT_TOKEN;
+
+    if (!diffbotToken) {
+        // Fallback to basic extraction if no Diffbot token
+        return fallbackExtraction(url, headers);
+    }
+
     try {
-        // Validate URL
+        // Call Diffbot Article API
+        const diffbotUrl = `https://api.diffbot.com/v3/article?token=${diffbotToken}&url=${encodeURIComponent(url)}`;
+
+        const response = await fetch(diffbotUrl);
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+            console.error('Diffbot error:', data.error || data);
+            // Fall back to basic extraction on error
+            return fallbackExtraction(url, headers);
+        }
+
+        // Extract the first article object
+        const article = data.objects?.[0];
+
+        if (!article) {
+            return fallbackExtraction(url, headers);
+        }
+
+        // Return clean article data
+        const result = {
+            title: article.title || 'Untitled',
+            content: article.text || '',
+            author: article.author || null,
+            date: article.date || null,
+            wordCount: article.text ? article.text.split(/\s+/).filter(w => w.length > 0).length : 0,
+            url: url,
+            source: 'diffbot'
+        };
+
+        return new Response(JSON.stringify(result), { headers });
+
+    } catch (error) {
+        console.error('Diffbot fetch error:', error);
+        // Fall back to basic extraction on network error
+        return fallbackExtraction(url, headers);
+    }
+}
+
+// Fallback extraction when Diffbot is unavailable
+async function fallbackExtraction(url, headers) {
+    try {
         const targetUrl = new URL(url);
 
-        // Fetch the webpage
         const response = await fetch(targetUrl.href, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (compatible; RSVPReader/1.0; +https://readsfast.vercel.app)',
@@ -46,10 +94,8 @@ export default async function handler(request) {
         }
 
         const html = await response.text();
-
-        // Simple article extraction using regex patterns
-        // This handles most article sites without external dependencies
-        const article = extractArticle(html, targetUrl.href);
+        const article = extractArticle(html, url);
+        article.source = 'fallback';
 
         return new Response(JSON.stringify(article), { headers });
     } catch (error) {
@@ -60,7 +106,7 @@ export default async function handler(request) {
     }
 }
 
-// Simple article extraction without external libraries
+// Basic article extraction without external libraries
 function extractArticle(html, url) {
     // Remove scripts, styles, comments
     let cleaned = html
@@ -79,10 +125,8 @@ function extractArticle(html, url) {
         html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i);
     const title = titleMatch ? decodeHtmlEntities(titleMatch[1].trim()) : 'Untitled';
 
-    // Try to find article content in common containers
+    // Try to find article content
     let content = '';
-
-    // Look for article or main content
     const articleMatch = cleaned.match(/<article[^>]*>([\s\S]*?)<\/article>/i) ||
         cleaned.match(/<main[^>]*>([\s\S]*?)<\/main>/i) ||
         cleaned.match(/<div[^>]*class="[^"]*(?:post-content|article-content|entry-content|content-body|post-body)[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
@@ -90,45 +134,31 @@ function extractArticle(html, url) {
     if (articleMatch) {
         content = articleMatch[1];
     } else {
-        // Fallback: find the largest text block
         const paragraphs = cleaned.match(/<p[^>]*>[\s\S]*?<\/p>/gi) || [];
         content = paragraphs.join('\n');
     }
 
     // Convert HTML to plain text
     let text = content
-        // Preserve paragraph breaks
         .replace(/<\/p>/gi, '\n\n')
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<\/h[1-6]>/gi, '\n\n')
         .replace(/<\/li>/gi, '\n')
         .replace(/<\/div>/gi, '\n')
-        // Remove all remaining HTML tags
         .replace(/<[^>]+>/g, '')
-        // Decode HTML entities
         .replace(/&nbsp;/g, ' ')
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'")
-        .replace(/&#x27;/g, "'")
-        .replace(/&#x2F;/g, '/')
-        // Clean up whitespace
         .replace(/\n\s*\n\s*\n/g, '\n\n')
         .trim();
 
-    // Decode any remaining HTML entities
     text = decodeHtmlEntities(text);
-
     const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
 
-    return {
-        title,
-        content: text,
-        wordCount,
-        url,
-    };
+    return { title, content: text, wordCount, url };
 }
 
 function decodeHtmlEntities(text) {
