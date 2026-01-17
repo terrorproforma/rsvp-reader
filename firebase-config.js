@@ -32,30 +32,40 @@ const firebaseAuth = {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     },
 
-    // Sign in with Google - uses redirect on mobile, popup on desktop with fallback
+    // Detect iOS Safari specifically (has issues with redirect auth)
+    isIOSSafari() {
+        const ua = navigator.userAgent;
+        const isIOS = /iPad|iPhone|iPod/.test(ua);
+        const isWebkit = /WebKit/.test(ua);
+        const isNotChrome = !/CriOS/.test(ua);
+        const isNotFirefox = !/FxiOS/.test(ua);
+        return isIOS && isWebkit && isNotChrome && isNotFirefox;
+    },
+
+    // Sign in with Google - try popup first on all devices, fallback to redirect
     async signInWithGoogle() {
         try {
-            if (this.isMobile()) {
-                // Mobile: use redirect flow (more reliable on iOS Safari)
-                await auth.signInWithRedirect(googleProvider);
-                // After redirect, the page will reload and onAuthStateChanged will fire
-                return null;
-            } else {
-                // Desktop: try popup first
-                try {
-                    const result = await auth.signInWithPopup(googleProvider);
-                    return result.user;
-                } catch (popupError) {
-                    // If popup is blocked or fails, fall back to redirect
-                    console.log('Popup failed, falling back to redirect:', popupError.code);
-                    if (popupError.code === 'auth/popup-blocked' ||
-                        popupError.code === 'auth/popup-closed-by-user' ||
-                        popupError.code === 'auth/cancelled-popup-request') {
-                        await auth.signInWithRedirect(googleProvider);
-                        return null;
+            // Try popup first - works better with Safari's ITP
+            try {
+                const result = await auth.signInWithPopup(googleProvider);
+                return result.user;
+            } catch (popupError) {
+                console.log('Popup auth failed:', popupError.code, popupError.message);
+
+                // For certain errors, try redirect as fallback
+                if (popupError.code === 'auth/popup-blocked' ||
+                    popupError.code === 'auth/popup-closed-by-user' ||
+                    popupError.code === 'auth/cancelled-popup-request') {
+
+                    // On iOS Safari, redirect often fails too - warn user
+                    if (this.isIOSSafari()) {
+                        console.log('iOS Safari detected - redirect may not work due to tracking prevention');
                     }
-                    throw popupError;
+
+                    await auth.signInWithRedirect(googleProvider);
+                    return null;
                 }
+                throw popupError;
             }
         } catch (error) {
             console.error('Sign in error:', error);
@@ -64,6 +74,8 @@ const firebaseAuth = {
                 throw new Error('This domain is not authorized for sign-in. Please contact the administrator.');
             } else if (error.code === 'auth/network-request-failed') {
                 throw new Error('Network error. Please check your connection and try again.');
+            } else if (error.code === 'auth/popup-blocked') {
+                throw new Error('Popup was blocked. Please allow popups for this site and try again.');
             }
             throw error;
         }
