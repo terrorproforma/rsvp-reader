@@ -32,7 +32,7 @@ const firebaseAuth = {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     },
 
-    // Sign in with Google - uses redirect on mobile, popup on desktop
+    // Sign in with Google - uses redirect on mobile, popup on desktop with fallback
     async signInWithGoogle() {
         try {
             if (this.isMobile()) {
@@ -41,12 +41,30 @@ const firebaseAuth = {
                 // After redirect, the page will reload and onAuthStateChanged will fire
                 return null;
             } else {
-                // Desktop: use popup
-                const result = await auth.signInWithPopup(googleProvider);
-                return result.user;
+                // Desktop: try popup first
+                try {
+                    const result = await auth.signInWithPopup(googleProvider);
+                    return result.user;
+                } catch (popupError) {
+                    // If popup is blocked or fails, fall back to redirect
+                    console.log('Popup failed, falling back to redirect:', popupError.code);
+                    if (popupError.code === 'auth/popup-blocked' ||
+                        popupError.code === 'auth/popup-closed-by-user' ||
+                        popupError.code === 'auth/cancelled-popup-request') {
+                        await auth.signInWithRedirect(googleProvider);
+                        return null;
+                    }
+                    throw popupError;
+                }
             }
         } catch (error) {
             console.error('Sign in error:', error);
+            // Provide user-friendly error messages
+            if (error.code === 'auth/unauthorized-domain') {
+                throw new Error('This domain is not authorized for sign-in. Please contact the administrator.');
+            } else if (error.code === 'auth/network-request-failed') {
+                throw new Error('Network error. Please check your connection and try again.');
+            }
             throw error;
         }
     },
