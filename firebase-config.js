@@ -51,6 +51,22 @@ const firebaseAuth = {
         }
     },
 
+    // Handle redirect result (called on page load)
+    async handleRedirectResult() {
+        try {
+            const result = await auth.getRedirectResult();
+            if (result && result.user) {
+                console.log('Redirect sign-in successful:', result.user.displayName);
+                return result.user;
+            }
+            return null;
+        } catch (error) {
+            console.error('Redirect result error:', error);
+            // Don't throw - just log the error
+            return null;
+        }
+    },
+
     // Sign out
     async signOut() {
         try {
@@ -74,6 +90,18 @@ const firebaseAuth = {
         return this.currentUser !== null;
     }
 };
+
+// Handle redirect result on page load (important for mobile auth)
+auth.getRedirectResult().then((result) => {
+    if (result && result.user) {
+        console.log('Redirect sign-in completed:', result.user.displayName);
+    }
+}).catch((error) => {
+    // Common errors: popup closed, redirect cancelled, etc.
+    if (error.code !== 'auth/redirect-cancelled-by-user') {
+        console.error('Redirect auth error:', error);
+    }
+});
 
 // ================================
 // FIRESTORE FUNCTIONS

@@ -995,6 +995,14 @@ function updateAuthUI(user) {
 async function handleLogin() {
   try {
     const user = await window.firebaseAuth.signInWithGoogle();
+
+    // For redirect flow (mobile), user will be null - the page reloads
+    // and onAuthStateChanged will handle the rest
+    if (!user) {
+      console.log('Redirect flow initiated, waiting for page reload...');
+      return;
+    }
+
     console.log('Signed in as:', user.displayName);
 
     // Migrate local notes to cloud
@@ -1005,7 +1013,10 @@ async function handleLogin() {
     renderNotesList();
   } catch (error) {
     console.error('Login failed:', error);
-    alert('Sign in failed. Please try again.');
+    // Don't show alert for redirect flow errors
+    if (error.code !== 'auth/redirect-cancelled-by-user') {
+      alert('Sign in failed. Please try again.');
+    }
   }
 }
 
