@@ -26,56 +26,148 @@ export default async function handler(request) {
         );
     }
 
-    // Get Diffbot API token from environment
+    // Get API tokens from environment
     const diffbotToken = process.env.DIFFBOT_TOKEN;
-
-    if (!diffbotToken) {
-        // Fallback to basic extraction if no Diffbot token
-        return fallbackExtraction(url, headers);
-    }
+    const geminiApiKey = process.env.GEMINI_API_KEY;
 
     try {
-        // Call Diffbot Article API
-        const diffbotUrl = `https://api.diffbot.com/v3/article?token=${diffbotToken}&url=${encodeURIComponent(url)}`;
+        let extractedText = '';
+        let title = 'Untitled';
+        let source = 'fallback';
 
+        // Step 1: Extract with Diffbot (or fallback)
+        if (diffbotToken) {
+            const diffbotResult = await extractWithDiffbot(url, diffbotToken);
+            if (diffbotResult) {
+                extractedText = diffbotResult.text;
+                title = diffbotResult.title;
+                source = 'diffbot';
+            }
+        }
+
+        // Fallback extraction if Diffbot fails or unavailable
+        if (!extractedText) {
+            const fallbackResult = await fallbackExtraction(url);
+            extractedText = fallbackResult.content;
+            title = fallbackResult.title;
+            source = 'fallback';
+        }
+
+        // Step 2: Clean with Gemini Flash (if available)
+        let cleanedText = extractedText;
+        if (geminiApiKey && extractedText.length > 100) {
+            const geminiResult = await cleanWithGemini(extractedText, geminiApiKey);
+            if (geminiResult) {
+                cleanedText = geminiResult;
+                source += '+gemini';
+            }
+        }
+
+        const wordCount = cleanedText.split(/\s+/).filter(w => w.length > 0).length;
+
+        return new Response(JSON.stringify({
+            title,
+            content: cleanedText,
+            wordCount,
+            url,
+            source
+        }), { headers });
+
+    } catch (error) {
+        console.error('Extract error:', error);
+        return new Response(
+            JSON.stringify({ error: error.message || 'Failed to extract article' }),
+            { status: 500, headers }
+        );
+    }
+}
+
+// Extract article using Diffbot API
+async function extractWithDiffbot(url, token) {
+    try {
+        const diffbotUrl = `https://api.diffbot.com/v3/article?token=${token}&url=${encodeURIComponent(url)}`;
         const response = await fetch(diffbotUrl);
         const data = await response.json();
 
         if (!response.ok || data.error) {
             console.error('Diffbot error:', data.error || data);
-            // Fall back to basic extraction on error
-            return fallbackExtraction(url, headers);
+            return null;
         }
 
-        // Extract the first article object
         const article = data.objects?.[0];
+        if (!article || !article.text) return null;
 
-        if (!article) {
-            return fallbackExtraction(url, headers);
-        }
-
-        // Return clean article data
-        const result = {
+        return {
             title: article.title || 'Untitled',
-            content: article.text || '',
-            author: article.author || null,
-            date: article.date || null,
-            wordCount: article.text ? article.text.split(/\s+/).filter(w => w.length > 0).length : 0,
-            url: url,
-            source: 'diffbot'
+            text: article.text
         };
-
-        return new Response(JSON.stringify(result), { headers });
-
     } catch (error) {
         console.error('Diffbot fetch error:', error);
-        // Fall back to basic extraction on network error
-        return fallbackExtraction(url, headers);
+        return null;
+    }
+}
+
+// Clean article text using Gemini Flash
+async function cleanWithGemini(text, apiKey) {
+    try {
+        const prompt = `You are an article text cleaner. Given the following article text, extract ONLY the main article content.
+
+REMOVE:
+- Newsletter subscription prompts ("Join X subscribers", "Subscribe here")
+- Author introductions ("Welcome to...", "Hi friends")
+- Paywall notices ("Keep reading with a free trial", "Thanks for reading")
+- Social sharing prompts
+- Author sign-offs at the very end
+- Any promotional content
+
+KEEP:
+- The actual article content/essay
+- Important quotes and citations within the article
+- Author attributions when they're part of the content
+
+Return ONLY the cleaned article text, nothing else. Do not add any commentary.
+
+ARTICLE TEXT:
+${text.substring(0, 50000)}`;
+
+        const response = await fetch(
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-goog-api-key': apiKey
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: prompt }]
+                    }],
+                    generationConfig: {
+                        maxOutputTokens: 30000,
+                        temperature: 0.1
+                    }
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error('Gemini error:', data);
+            return null;
+        }
+
+        const cleanedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        return cleanedText || null;
+
+    } catch (error) {
+        console.error('Gemini fetch error:', error);
+        return null;
     }
 }
 
 // Fallback extraction when Diffbot is unavailable
-async function fallbackExtraction(url, headers) {
+async function fallbackExtraction(url) {
     try {
         const targetUrl = new URL(url);
 
@@ -87,22 +179,13 @@ async function fallbackExtraction(url, headers) {
         });
 
         if (!response.ok) {
-            return new Response(
-                JSON.stringify({ error: `Failed to fetch URL: ${response.status}` }),
-                { status: 400, headers }
-            );
+            throw new Error(`Failed to fetch URL: ${response.status}`);
         }
 
         const html = await response.text();
-        const article = extractArticle(html, url);
-        article.source = 'fallback';
-
-        return new Response(JSON.stringify(article), { headers });
+        return extractArticle(html, url);
     } catch (error) {
-        return new Response(
-            JSON.stringify({ error: error.message || 'Failed to extract article' }),
-            { status: 500, headers }
-        );
+        throw error;
     }
 }
 
