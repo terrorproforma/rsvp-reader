@@ -26,16 +26,15 @@ export default async function handler(request) {
         );
     }
 
-    // Get API tokens from environment
+    // Get Diffbot API token from environment
     const diffbotToken = process.env.DIFFBOT_TOKEN;
-    const geminiApiKey = process.env.GEMINI_API_KEY;
 
     try {
         let extractedText = '';
         let title = 'Untitled';
         let source = 'fallback';
 
-        // Step 1: Extract with Diffbot (or fallback)
+        // Extract with Diffbot (or fallback)
         if (diffbotToken) {
             const diffbotResult = await extractWithDiffbot(url, diffbotToken);
             if (diffbotResult) {
@@ -53,21 +52,11 @@ export default async function handler(request) {
             source = 'fallback';
         }
 
-        // Step 2: Clean with Gemini Flash (if available)
-        let cleanedText = extractedText;
-        if (geminiApiKey && extractedText.length > 100) {
-            const geminiResult = await cleanWithGemini(extractedText, geminiApiKey);
-            if (geminiResult) {
-                cleanedText = geminiResult;
-                source += '+gemini';
-            }
-        }
-
-        const wordCount = cleanedText.split(/\s+/).filter(w => w.length > 0).length;
+        const wordCount = extractedText.split(/\s+/).filter(w => w.length > 0).length;
 
         return new Response(JSON.stringify({
             title,
-            content: cleanedText,
+            content: extractedText,
             wordCount,
             url,
             source
@@ -107,65 +96,6 @@ async function extractWithDiffbot(url, token) {
     }
 }
 
-// Clean article text using Gemini Flash
-async function cleanWithGemini(text, apiKey) {
-    try {
-        const prompt = `You are an article text cleaner. Given the following article text, extract ONLY the main article content.
-
-REMOVE:
-- Newsletter subscription prompts ("Join X subscribers", "Subscribe here")
-- Author introductions ("Welcome to...", "Hi friends")
-- Paywall notices ("Keep reading with a free trial", "Thanks for reading")
-- Social sharing prompts
-- Author sign-offs at the very end
-- Any promotional content
-
-KEEP:
-- The actual article content/essay
-- Important quotes and citations within the article
-- Author attributions when they're part of the content
-
-Return ONLY the cleaned article text, nothing else. Do not add any commentary.
-
-ARTICLE TEXT:
-${text.substring(0, 50000)}`;
-
-        const response = await fetch(
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-goog-api-key': apiKey
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: prompt }]
-                    }],
-                    generationConfig: {
-                        maxOutputTokens: 30000,
-                        temperature: 0.1
-                    }
-                })
-            }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error('Gemini error:', data);
-            return null;
-        }
-
-        const cleanedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        return cleanedText || null;
-
-    } catch (error) {
-        console.error('Gemini fetch error:', error);
-        return null;
-    }
-}
-
 // Fallback extraction when Diffbot is unavailable
 async function fallbackExtraction(url) {
     try {
@@ -191,7 +121,6 @@ async function fallbackExtraction(url) {
 
 // Basic article extraction without external libraries
 function extractArticle(html, url) {
-    // Remove scripts, styles, comments
     let cleaned = html
         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
         .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -202,17 +131,13 @@ function extractArticle(html, url) {
         .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
         .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '');
 
-    // Extract title
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i) ||
-        html.match(/<h1[^>]*>([^<]+)<\/h1>/i) ||
-        html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i);
+        html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
     const title = titleMatch ? decodeHtmlEntities(titleMatch[1].trim()) : 'Untitled';
 
-    // Try to find article content
     let content = '';
     const articleMatch = cleaned.match(/<article[^>]*>([\s\S]*?)<\/article>/i) ||
-        cleaned.match(/<main[^>]*>([\s\S]*?)<\/main>/i) ||
-        cleaned.match(/<div[^>]*class="[^"]*(?:post-content|article-content|entry-content|content-body|post-body)[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+        cleaned.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
 
     if (articleMatch) {
         content = articleMatch[1];
@@ -221,20 +146,12 @@ function extractArticle(html, url) {
         content = paragraphs.join('\n');
     }
 
-    // Convert HTML to plain text
     let text = content
         .replace(/<\/p>/gi, '\n\n')
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<\/h[1-6]>/gi, '\n\n')
-        .replace(/<\/li>/gi, '\n')
-        .replace(/<\/div>/gi, '\n')
         .replace(/<[^>]+>/g, '')
         .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
         .replace(/\n\s*\n\s*\n/g, '\n\n')
         .trim();
 
