@@ -80,33 +80,30 @@ async function cleanWithGeminiChunked(text, apiKey) {
             return await cleanFullWithGemini(text, apiKey);
         }
 
-        const prompt = `You are a text trimmer. Your job is to REMOVE noise from the START and END of article text, preserving EXACT formatting and content otherwise.
+        const prompt = `You are trimming newsletter/blog article text. Remove only the meta-content at the START and END, keeping all actual article content.
 
-RULES:
-1. Do NOT add any new text (no titles, no summaries)
-2. Do NOT rewrite or rephrase anything
-3. PRESERVE all paragraph breaks (newlines) exactly as they are
-4. Only REMOVE the following types of noise:
+PRINCIPLE: Meta-content is text ABOUT the newsletter (subscriber counts, subscription prompts, paywalls, sign-offs). Article content is the actual writing the reader came for. When in doubt, KEEP the text.
 
-FOR START: Remove ONLY these specific types of lines:
-- Subscriber count lines like "Welcome to the X newly..." or "Join X,XXX subscribers"
-- "Subscribe here" prompts or subscription links
-- Do NOT remove author greetings like "Hi friends" - these are part of the article
+AT START - remove only:
+- Subscriber/reader count announcements
+- "Subscribe" or "Sign up" prompts
 
-FOR END: Remove lines containing:
-- "Thanks for reading" / "That's all for today"
-- Author sign-offs (e.g., "Packy", "Best, [Name]")
-- Paywall notices / "Keep reading with a free trial"
-- "Join us behind the paywall"
-- Sponsor thanks / credits lines
+AT END - remove only:  
+- Paywall notices or upsells
+- Final sign-offs like "Thanks for reading, [Author]"
+- "That's all for today" closings
 
-Return your response in this EXACT format:
+PRESERVE:
+- Author greetings that start the actual content
+- All paragraph breaks and formatting
+- Everything in between start and end
+
+Return EXACTLY in this format:
 
 ===START===
-[trimmed start chunk, with original formatting preserved]
+[trimmed start, preserving formatting]
 ===END===
-[trimmed end chunk, with original formatting preserved]
-
+[trimmed end, preserving formatting]
 ---
 START CHUNK TO TRIM:
 ${startChunk}
